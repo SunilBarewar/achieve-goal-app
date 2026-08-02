@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">app</string>
+    <string name="app_name">Achieve Goal</string>
+    <string name="accessibility_service_description">Detects when blocked apps open so Achieve Goal can show the block screen and return you home.</string>
 </resources>

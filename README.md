@@ -1,97 +1,132 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Achieve Goal
 
-# Getting Started
+A mobile focus app built with [React Native](https://reactnative.dev). It helps you stay on task by **blocking distracting apps until a time you choose** (e.g. until 8:00 PM) — with no option to unblock early.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+**Android only** — personal use on a physical device.
 
-## Step 1: Start Metro
+## v1 feature
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+**Block until a chosen time**
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- Pick one or more installed apps to block
+- Choose when each block ends (presets like “Until 8:00 PM” or a custom time) — not “block for 2 hours”
+- Each app can have its own end time
+- **No early unblock** — once started, the block cannot be cancelled from the app before that time
+- Enforcement continues in the background (Android foreground service)
 
-```sh
-# Using npm
-npm start
+Future versions may add schedules and stats.
 
-# OR using Yarn
-yarn start
+## How it works (high level)
+
+1. You grant special permissions (usage access, accessibility, overlay — required on Android for any app blocker).
+2. You select apps and an end time (e.g. block until 8:00 PM).
+3. A native background service monitors which app is in the foreground.
+4. If you open a blocked app before that time, a full-screen overlay appears and you are sent back to the home screen.
+5. When the end time is reached, that app is automatically unblocked.
+
+See the full technical plan: [docs/app-blocking-v1-plan.md](./docs/app-blocking-v1-plan.md).
+
+## Platform support
+
+**Android only** — full blocking via Usage Stats + Accessibility + overlay. Install via sideload APK on a physical device; emulators poorly simulate accessibility and overlay behavior.
+
+## Permissions
+
+App blockers need elevated access on Android. Users must enable these manually in system Settings.
+
+### Android (required for blocking)
+
+| Permission / setting | Why it’s needed |
+|----------------------|-----------------|
+| **Usage access** (`PACKAGE_USAGE_STATS`) | Detect which app is currently open |
+| **Accessibility service** | Intercept app launches quickly and return to home |
+| **Display over other apps** (`SYSTEM_ALERT_WINDOW`) | Show the “app is blocked” overlay |
+| **Notifications** (`POST_NOTIFICATIONS`, Android 13+) | Show an ongoing notification while blocks are active |
+| **Foreground service** | Keep the block monitor running when the app is closed |
+| **Boot completed** | Restore active blocks after device restart |
+| **Battery optimization exemption** (recommended) | Reduce chance the OS stops the monitor service |
+
+### Android (manifest — no user prompt)
+
+- `INTERNET` — already declared (Metro / updates; not used for blocking logic in v1)
+- `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_SPECIAL_USE` — declare foreground monitoring
+- `RECEIVE_BOOT_COMPLETED` — restart blocks after reboot
+
+## Requirements for the app to work properly
+
+### Development environment
+
+- **Node.js** ≥ 22.11.0
+- **React Native** 0.86.x environment — follow [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment)
+- **Android:** Android Studio, SDK 35, JDK 17+, `ANDROID_HOME` and `JAVA_HOME` set
+
+### Runtime (end user — Android)
+
+1. Install the APK on a physical device (see [docs/building-apk.md](./docs/building-apk.md)).
+2. Complete the in-app permission setup (usage access, accessibility, overlay, notifications).
+3. Optionally disable battery optimization for Achieve Goal.
+4. Keep the app installed for the duration of any active block.
+
+### Limitations users should know
+
+- Blocks are **commitment tools**, not unbreakable locks. Disabling accessibility, revoking usage access, or uninstalling the app can bypass enforcement.
+- Changing the device clock may affect timers; the app uses best-effort tamper detection (see implementation plan).
+- Personal sideload — no Play Store, but Accessibility and overlay permissions still need clear in-app explanation.
+
+## Project structure
+
+```
+app/
+├── App.tsx                 # Root component (will host navigation)
+├── src/                    # App screens, services, components (to be added)
+├── android/                # Native Android project + blocker module
+├── docs/
+│   ├── app-blocking-v1-plan.md   # Detailed implementation plan
+│   └── building-apk.md           # Build & install APK
+└── package.json
 ```
 
-## Step 2: Build and run your app
+## Getting started
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
+From the `app/` directory:
 
 ```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+npm install
+npm start          # Metro bundler
+npm run android    # Run on Android device/emulator
 ```
 
-### iOS
+## Building a release APK
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+See [docs/building-apk.md](./docs/building-apk.md) for debug/release APK commands and troubleshooting.
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+## Implementation roadmap
 
-```sh
-bundle install
-```
+Detailed phases, architecture, data models, and milestones:
 
-Then, and every time you update your native dependencies, run:
+**[docs/app-blocking-v1-plan.md](./docs/app-blocking-v1-plan.md)**
 
-```sh
-bundle exec pod install
-```
+Summary:
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+1. **M1** — Permissions flow + app picker + end time picker
+2. **M2** — Start block (`endsAt`), persistence, active blocks UI
+3. **M3** — Foreground service, accessibility service, block overlay
+4. **M4** — Boot restore, time tamper basics, QA
 
-```sh
-# Using npm
-npm run ios
+## Tech stack
 
-# OR using Yarn
-yarn ios
-```
+- React Native 0.86.2
+- React 19
+- TypeScript
+- Kotlin (Android native module)
+- Hermes (default)
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## Troubleshooting
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+- React Native general issues: [Troubleshooting](https://reactnative.dev/docs/troubleshooting)
+- Android build issues: [docs/building-apk.md](./docs/building-apk.md)
+- Blocking not working: verify all permissions in Settings → Apps → Achieve Goal / Special access
 
-## Step 3: Modify your app
+## License
 
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Private project — not published yet.
