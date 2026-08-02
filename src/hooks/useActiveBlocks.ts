@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useState} from 'react';
 
-import {loadBlocks} from '@/services/blockStore';
+import {syncBlocksFromNative} from '@/services/blockStore';
 import type {BlockSession} from '@/types/block';
 
 export function useActiveBlocks() {
@@ -9,8 +9,8 @@ export function useActiveBlocks() {
 
   const refresh = useCallback(async () => {
     try {
-      const sessions = await loadBlocks();
-      setBlocks(sessions.filter(b => b.status === 'active'));
+      const sessions = await syncBlocksFromNative();
+      setBlocks(sessions);
     } finally {
       setLoading(false);
     }

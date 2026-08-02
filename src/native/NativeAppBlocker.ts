@@ -15,10 +15,21 @@ export type PermissionStatusNative = {
   battery_optimization: boolean;
 };
 
+export type BlockSessionNative = {
+  id: string;
+  packageName: string;
+  appLabel: string;
+  startedAt: number;
+  endsAt: number;
+  status: 'active' | 'expired';
+};
+
 export interface Spec extends TurboModule {
   getInstalledApps(): Promise<InstalledAppNative[]>;
   checkPermissions(): Promise<PermissionStatusNative>;
   openPermissionSettings(permission: string): Promise<void>;
+  startBlock(packageName: string, endsAtMs: number): Promise<BlockSessionNative>;
+  getActiveBlocks(): Promise<BlockSessionNative[]>;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>('AppBlocker');

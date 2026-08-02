@@ -3,6 +3,10 @@ import {Alert, Image, StyleSheet, Text, useColorScheme, View} from 'react-native
 
 import {Button, Screen} from '@/components/Screen';
 import type {ConfirmScreenProps} from '@/navigation/types';
+import {
+  getStartBlockErrorMessage,
+  startBlock,
+} from '@/services/appBlocker';
 import {colors, radius, spacing, typography} from '@/theme';
 import {formatEndTime} from '@/utils/endTime';
 
@@ -14,12 +18,14 @@ export function ConfirmScreen({navigation, route}: ConfirmScreenProps) {
   const onConfirm = async () => {
     setSubmitting(true);
     try {
-      // Phase 2 will call native startBlock(endsAt) here.
-      Alert.alert(
-        'Coming in Phase 2',
-        'Block enforcement will be wired in the next phase. The end time and app selection flow is ready.',
-        [{text: 'OK', onPress: () => navigation.popToTop()}],
-      );
+      await startBlock(app.packageName, endsAt);
+      navigation.popToTop();
+    } catch (error) {
+      const code =
+        error && typeof error === 'object' && 'code' in error
+          ? String((error as {code: string}).code)
+          : '';
+      Alert.alert('Could not start block', getStartBlockErrorMessage(code));
     } finally {
       setSubmitting(false);
     }

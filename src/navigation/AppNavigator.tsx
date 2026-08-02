@@ -3,6 +3,7 @@ import {useColorScheme} from 'react-native';
 import {NavigationContainer, DefaultTheme, DarkTheme} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
+import {PermissionsProvider} from '@/contexts/PermissionsContext';
 import {colors} from '@/theme';
 import type {RootStackParamList} from '@/navigation/types';
 import {PermissionsScreen} from '@/screens/PermissionsScreen';
@@ -14,7 +15,7 @@ import {usePermissions} from '@/hooks/usePermissions';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-function AppNavigator() {
+function AppNavigatorContent() {
   const {allRequiredGranted: ready, loading} = usePermissions();
   const isDark = useColorScheme() === 'dark';
 
@@ -81,4 +82,10 @@ function AppNavigator() {
   );
 }
 
-export default AppNavigator;
+export default function AppNavigator() {
+  return (
+    <PermissionsProvider>
+      <AppNavigatorContent />
+    </PermissionsProvider>
+  );
+}

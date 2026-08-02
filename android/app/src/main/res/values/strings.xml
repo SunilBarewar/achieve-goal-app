@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">Achieve Goal</string>
     <string name="accessibility_service_description">Detects when blocked apps open so Achieve Goal can show the block screen and return you home.</string>
+    <string name="block_until">Blocked until %1$s</string>
+    <string name="block_remaining">%1$s remaining</string>
+    <string name="block_remaining_hours">%1$dh %2$dm</string>
+    <string name="block_remaining_minutes">%1$dm</string>
+    <string name="block_expiring_soon">Expiring soon</string>
+    <string name="block_no_early_unblock">You cannot unblock early.</string>
 </resources>

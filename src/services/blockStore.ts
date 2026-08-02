@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {v4 as uuidv4} from 'uuid';
 
+import NativeAppBlocker from '@/native/NativeAppBlocker';
 import type {BlockSession} from '@/types/block';
 
 const STORAGE_KEY = '@achieve_goal/blocks';
@@ -30,4 +31,11 @@ export function createBlockSession(
     status: 'active',
     ...partial,
   };
+}
+
+/** Sync native block state to AsyncStorage (native wins for endsAt/status). */
+export async function syncBlocksFromNative(): Promise<BlockSession[]> {
+  const blocks = await NativeAppBlocker.getActiveBlocks();
+  await saveBlocks(blocks);
+  return blocks;
 }

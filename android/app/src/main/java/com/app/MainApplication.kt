@@ -2,6 +2,8 @@ package com.app
 
 import android.app.Application
 import com.app.blocker.AppBlockerPackage
+import com.app.blocker.BlockMonitorService
+import com.app.blocker.BlockRepository
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
@@ -23,5 +25,8 @@ class MainApplication : Application(), ReactApplication {
   override fun onCreate() {
     super.onCreate()
     loadReactNative(this)
+    if (BlockRepository.getInstance(this).getActiveBlocks().isNotEmpty()) {
+      BlockMonitorService.startOrUpdate(this)
+    }
   }
 }

@@ -388,10 +388,10 @@ Update the **Status** column as work proceeds: `Not started` → `In progress` �
 |-------|------|------------------|--------|-----------|
 | 0 | Project setup | Folder structure, theme tokens, AsyncStorage, native module scaffold | Completed | Aug 2, 2026 |
 | 1 | App list & permissions UX | `getInstalledApps`, permission flow, home, app picker, **end time** & confirm screens | Completed | Aug 2, 2026 |
-| 2 | Start block (native persistence) | `startBlock(endsAt)` / `getActiveBlocks`, SharedPreferences, validation | Not started | — |
-| 3 | Enforcement (core) | `BlockMonitorService`, Accessibility service, block overlay, `BootReceiver` | Not started | — |
+| 2 | Start block (native persistence) | `startBlock(endsAt)` / `getActiveBlocks`, SharedPreferences, validation | Completed | Aug 2, 2026 |
+| 3 | Enforcement (core) | `BlockMonitorService`, Accessibility service, block overlay, `BootReceiver` | Completed | Aug 2, 2026 |
 | 4 | React Native UI polish | Active block cards, “Unblocks at” copy, empty state, permission gate | Not started | — |
 | 5 | Hardening & edge cases | Time tamper resistance, tomorrow rollover, service restart | Not started | — |
 | 6 | Testing | Unit tests, manual device matrix, release APK smoke test | Not started | — |
 
-**Overall:** 2 / 7 phases completed
+**Overall:** 4 / 7 phases completed

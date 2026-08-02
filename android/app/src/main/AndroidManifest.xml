@@ -41,6 +41,31 @@
         </intent-filter>
       </activity>
 
+      <activity
+        android:name="com.app.blocker.BlockOverlayActivity"
+        android:exported="false"
+        android:excludeFromRecents="true"
+        android:launchMode="singleTask"
+        android:taskAffinity=""
+        android:theme="@style/BlockOverlayTheme" />
+
+      <receiver
+        android:name="com.app.blocker.BootReceiver"
+        android:exported="false">
+        <intent-filter>
+          <action android:name="android.intent.action.BOOT_COMPLETED" />
+        </intent-filter>
+      </receiver>
+
+      <service
+        android:name="com.app.blocker.BlockMonitorService"
+        android:exported="false"
+        android:foregroundServiceType="specialUse">
+        <property
+          android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+          android:value="app_blocking" />
+      </service>
+
       <service
         android:name="com.app.blocker.AppLaunchAccessibilityService"
         android:exported="false"

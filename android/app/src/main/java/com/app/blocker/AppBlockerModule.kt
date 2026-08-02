@@ -89,6 +89,49 @@ class AppBlockerModule(reactContext: ReactApplicationContext) :
     }
   }
 
+  override fun startBlock(packageName: String, endsAtMs: Double, promise: Promise) {
+    try {
+      val endsAt = endsAtMs.toLong()
+      val now = System.currentTimeMillis()
+      val repository = BlockRepository.getInstance(reactApplicationContext)
+
+      validateStartBlock(packageName, endsAt, now, repository)
+
+      val pm = reactApplicationContext.packageManager
+      val appLabel =
+        try {
+          pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
+        } catch (_: PackageManager.NameNotFoundException) {
+          packageName
+        }
+
+      val session = repository.addBlock(packageName, appLabel, endsAt, now)
+      BlockMonitorService.startOrUpdate(reactApplicationContext)
+      promise.resolve(session.toWritableMap())
+    } catch (e: BlockValidationException) {
+      promise.reject(e.code, e.message)
+    } catch (e: Exception) {
+      promise.reject("START_BLOCK_ERROR", e.message, e)
+    }
+  }
+
+  override fun getActiveBlocks(promise: Promise) {
+    try {
+      val repository = BlockRepository.getInstance(reactApplicationContext)
+      val blocks = repository.getActiveBlocks()
+      if (blocks.isNotEmpty()) {
+        BlockMonitorService.startOrUpdate(reactApplicationContext)
+      } else {
+        BlockMonitorService.stopIfIdle(reactApplicationContext)
+      }
+      val result = WritableNativeArray()
+      blocks.forEach { result.pushMap(it.toWritableMap()) }
+      promise.resolve(result)
+    } catch (e: Exception) {
+      promise.reject("GET_BLOCKS_ERROR", e.message, e)
+    }
+  }
+
   override fun openPermissionSettings(permission: String, promise: Promise) {
     try {
       val ctx = reactApplicationContext
@@ -206,7 +249,42 @@ class AppBlockerModule(reactContext: ReactApplicationContext) :
     return "data:image/png;base64,$base64"
   }
 
+  private fun validateStartBlock(
+    packageName: String,
+    endsAt: Long,
+    now: Long,
+    repository: BlockRepository,
+  ) {
+    if (endsAt <= now) {
+      throw BlockValidationException(
+        "ENDS_AT_IN_PAST",
+        "End time must be in the future.",
+      )
+    }
+    if (endsAt < now + BlockRepository.MIN_LEAD_TIME_MS) {
+      throw BlockValidationException(
+        "ENDS_AT_TOO_SOON",
+        "End time must be at least 1 minute from now.",
+      )
+    }
+    if (endsAt > now + BlockRepository.MAX_HORIZON_MS) {
+      throw BlockValidationException(
+        "ENDS_AT_TOO_FAR",
+        "End time cannot be more than 7 days away.",
+      )
+    }
+    if (repository.hasActiveBlock(packageName, now)) {
+      throw BlockValidationException(
+        "DUPLICATE_BLOCK",
+        "This app is already blocked.",
+      )
+    }
+  }
+
   companion object {
     const val NAME = "AppBlocker"
   }
 }
+
+private class BlockValidationException(val code: String, override val message: String) :
+  Exception(message)

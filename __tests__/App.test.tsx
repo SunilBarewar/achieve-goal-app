@@ -27,6 +27,17 @@ jest.mock('@/native/NativeAppBlocker', () => ({
       }),
     ),
     openPermissionSettings: jest.fn(() => Promise.resolve()),
+    startBlock: jest.fn(() =>
+      Promise.resolve({
+        id: 'test-id',
+        packageName: 'com.test',
+        appLabel: 'Test',
+        startedAt: Date.now(),
+        endsAt: Date.now() + 3600000,
+        status: 'active',
+      }),
+    ),
+    getActiveBlocks: jest.fn(() => Promise.resolve([])),
   },
 }));
 
